@@ -1,0 +1,37 @@
+# Production-style stack: nginx (static UI + load balancer) -> 2 backend replicas -> PostgreSQL + Redis.
+#   docker compose up --build            (then open http://localhost:8080)
+#   docker compose up --build --scale backend=4     more replicas (restart nginx afterwards: docker compose restart web)
+# For a single-process dev run without Docker see README.md.
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: examhub, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-examhub}", POSTGRES_DB: examhub }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U examhub"], interval: 5s, timeout: 3s, retries: 20 }
+  redis:
+    image: redis:7-alpine
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20 }
+  backend:
+    build: { context: ./backend, args: { WITH_OPTIONAL: "${WITH_OPTIONAL:-false}" } }
+    env_file: ./backend/.env
+    environment:
+      ENV: production
+      SECRET_KEY: "${SECRET_KEY:?set SECRET_KEY in a .env file next to docker-compose.yml}"
+      DATABASE_URL: "postgresql+psycopg2://examhub:${POSTGRES_PASSWORD:-examhub}@db:5432/examhub"
+      REDIS_URL: redis://redis:6379/0
+      TRUST_PROXY: "true"
+      DEV_SHOW_OTP: "false"
+      SEED_DEV_USERS: "false"            # no demo accounts in production; sign in as ADMIN_EMAIL / ADMIN_PASSWORD
+      STORAGE_DIR: /data/storage
+      FRONTEND_DIR: /nonexistent          # nginx serves the UI in this stack
+      CORS_ORIGINS: "http://localhost:8080"
+    volumes: [storage:/data/storage]      # shared by all replicas (swap for S3/Azure/GCS in real deployments)
+    depends_on: { db: { condition: service_healthy }, redis: { condition: service_healthy } }
+    deploy: { replicas: 2 }
+    restart: unless-stopped
+  web:
+    build: { context: ., dockerfile: frontend/Dockerfile }
+    ports: ["8080:80"]
+    depends_on: [backend]
+    restart: unless-stopped
+volumes: { pgdata: {}, storage: {} }

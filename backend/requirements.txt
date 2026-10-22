@@ -1,0 +1,21 @@
+# Core (versions kept from the original project where they existed)
+fastapi==0.122.0
+starlette==0.50.0
+uvicorn==0.38.0
+pydantic==2.12.5
+email-validator==2.3.0
+sqlmodel==0.0.27
+SQLAlchemy==2.0.44
+python-multipart==0.0.20
+python-dotenv==1.2.1
+python-jose[cryptography]==3.5.0
+bcrypt==5.0.0
+aiofiles==25.1.0
+# Question import (PDF / Word) and reports (PDF / Excel)
+pypdf==5.1.0
+python-docx==1.1.2
+openpyxl==3.1.5
+reportlab==4.4.10
+# Scale-out: PostgreSQL driver and Redis (live events across several servers)
+psycopg2-binary==2.9.10
+redis==5.2.1

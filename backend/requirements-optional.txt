@@ -1,0 +1,6 @@
+# Install only what you use:  pip install -r requirements-optional.txt
+pymysql==1.1.1                  # DATABASE_URL=mysql+pymysql://...
+pymongo==4.10.1                 # MONGO_URL=...  (mirror proctoring events to MongoDB)
+boto3==1.35.90                  # STORAGE_BACKEND=s3
+azure-storage-blob==12.24.0     # STORAGE_BACKEND=azure
+google-cloud-storage==2.19.0    # STORAGE_BACKEND=gcs
